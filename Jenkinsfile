@@ -1,51 +1,32 @@
 pipeline {
     agent any
-
     stages {
         stage('1. Checkout') {
+            steps { checkout scm }
+        }
+        stage('2. Run Tests') {
             steps {
-                // Pull code from GitHub
-                checkout scm
+                // Runs the python test script
+                bat 'python test_app.py'
             }
         }
-
-        stage('2. Test & Coverage') {
+        stage('3. Build Docker Image') {
             steps {
-                // Run JUnit tests and generate JaCoCo reports
-                bat 'mvn clean test' 
-            }
-            post {
-                always {
-                    // Publish Unit Test results in Jenkins
-                    junit '**/target/surefire-reports/*.xml' [cite: 352, 800]
-                }
+                // Build and tag with Jenkins build number
+                bat 'docker build -t calc-web-app:%BUILD_NUMBER% .'
             }
         }
-
-        stage('3. Docker Build') {
+        stage('4. Deploy to Browser') {
             steps {
-                // Create a Docker image tagged with the build number
-                bat 'docker build -t devops-final-app:%BUILD_NUMBER% .' [cite: 1152]
-            }
-        }
-
-        stage('4. Deploy (Run)') {
-            steps {
-                // Stop and remove old container if it exists
-                bat 'docker stop my-app || true'
-                bat 'docker rm my-app || true'
-                // Run the new container on port 5050
-                bat 'docker run -d --name my-app -p 5050:8080 devops-final-app:%BUILD_NUMBER%' [cite: 39, 1070]
+                // Remove old container if it exists
+                bat 'docker stop my-calc-container || true'
+                bat 'docker rm my-calc-container || true'
+                // Run on port 5050 so it doesn't clash with Jenkins
+                bat 'docker run -d --name my-calc-container -p 5050:8080 calc-web-app:%BUILD_NUMBER%'
             }
         }
     }
-
     post {
-        success {
-            echo 'Pipeline completed successfully! App is live at http://localhost:5050'
-        }
-        failure {
-            echo 'Pipeline failed. Check the logs for errors.' [cite: 389, 841]
-        }
+        success { echo 'App is live! Open http://localhost:5050' }
     }
 }
