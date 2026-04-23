@@ -1,6 +1,5 @@
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
-# Logic from Lab 11/13
 class Calculator:
     def add(self, a, b):
         return a + b
@@ -18,6 +17,6 @@ class MyHandler(SimpleHTTPRequestHandler):
         self.wfile.write(display.encode())
 
 if __name__ == "__main__":
-    server = HTTPServer(("0.0.0.0", 8080), MyHandler)
+    server = HTTPServer(("0.0.0.0", 5020), MyHandler)
     print("Server running on port 8080...")
     server.serve_forever()
